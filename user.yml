@@ -1,0 +1,57 @@
+---
+- hosts: "localhost"
+  connection: "local"
+  sudo: yes
+  vars:
+    password: $UqddPX3r4kH$3UL5Ajq5/ZI
+  tasks:
+  #Create Users
+  - name: "Create user1"
+    user:
+      name: "user1"
+      groups: "root, docker, test"
+      uid: 2000
+  - name: "Create user2"
+    user:
+      name: "user2"
+      password: "{{ password }}"
+      groups: "root, docker, test"
+
+  #Create SSH key file
+  - name: "Create SSH key file for user1"
+    command: touch /home/user1/.ssh/id_rsa.pub
+  - name: "Create SSH key value for user1"
+    command: echo ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCy9f0/nwkXESzkL4v4ftZ24VJYvkQ/Nt6vsLab3iSWtJXqrRsBythCcbAU6W95OGxjbTSFFtp0poqMcPuogocMR7QhjY9JGG3fcnJ7nYDCGRHD4zfG5Af/tHwvJ2ew0WTYoemvlfZIG/jZ7fsuOQSyUpJoxGAlb6/QpnfSmJjxCx0VEoppWDn8CO3VhOgzVhWx0dcne+ZcUy3Kkt3HBQN0hosRfqkVSRTvkpK4RD8TaW5PrVDe1r2Q5ab37TO+Ls4xxt16QlPubNxWeH3dHVzXdmFAItuH0DuyLyMoW1oxZ6+NrKu+pAAERxM303gejFzKDqXid5m1EOTvk4xhyqYN > /home/user1/.ssh/id_rsa.pub
+
+  #Assign public key to user1
+  - name: "Add authorized keys"
+    authorized_key:
+      user: "user1"
+      key: "{{ lookup('file', 'home/user1/id_rsa.pub') }}"
+      state: "present"
+
+  - name: "Allow admin users to sudo without a password"
+    lineinfile:
+      dest: "/etc/sudoers.d"
+      state: "present"
+      regexp: "^%root"
+      line: "%root ALL=(ALL) NOPASSWD: ALL"
+
+  - name: "Create MOTD file"
+    command: touch /home/MOTD
+  - name: "Copy MOTD"
+    copy:
+      src: /home/MOTD
+      dest: /home/user1
+      mode: 0600
+  - name: "Copy MOTD"
+    copy:
+      src: /home/MOTD
+      dest: /home/user2
+      mode: 0600
+
+
+
+
+
+
